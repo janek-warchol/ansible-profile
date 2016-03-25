@@ -59,8 +59,13 @@ class CallbackModule(object):
             reverse=True,
         )
 
-        # Just keep the top 10
-        results = results[:10]
+        # Just keep the top results
+        env_limit = os.getenv("ANSIBLE_PROFILE_STATS_LENGTH")
+        if env_limit is None:
+            limit = 33
+        else:
+            limit = int(env_limit)
+        results = results[:limit]
 
         # Print the timings
         for name, stats in results:
