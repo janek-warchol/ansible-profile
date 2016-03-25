@@ -11,6 +11,7 @@ class CallbackModule(object):
         self.stats = {}
         self.previous = None
         self.previous_task_start = time.time()
+        self.startup_time = 0
 
     def playbook_on_task_start(self, name, is_conditional):
         """
@@ -21,11 +22,12 @@ class CallbackModule(object):
             return
 
         current_task_start = time.time()
+        delta_t = current_task_start - self.previous_task_start
 
-        if self.previous is not None:
+        if self.previous is None:
+            self.startup_time = delta_t
+        else:
             # Record the running time of the last executed task
-            delta_t = current_task_start - self.previous_task_start
-
             if self.previous not in self.stats:
                 self.stats[self.previous] = {
                     'occurences': 1,
@@ -72,10 +74,14 @@ class CallbackModule(object):
                 )
             )
 
-        total_seconds = sum([stats['time'] for name, stats in self.stats.items()])
+        print('\nStartup time (not inside any task): {0:.02f}s'.format(self.startup_time))
+
+        total_seconds = sum([stats['time'] for name, stats in self.stats.items()]) \
+                        + self.startup_time
         print("\nPlaybook finished: {0}, {1} total tasks.  {2} elapsed. \n".format(
                 time.asctime(),
                 len(self.stats.items()),
                 datetime.timedelta(seconds=(int(total_seconds)))
                 )
           )
+
